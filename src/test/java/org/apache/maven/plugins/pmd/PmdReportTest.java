@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Locale;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -46,7 +45,6 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        Locale.setDefault(Locale.ENGLISH);
         FileUtils.deleteDirectory(new File(getBasedir(), "target/test/unit"));
     }
 
@@ -84,9 +82,9 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
         assertTrue(str.contains("pmd_rules_java_bestpractices.html#unusedprivatefield\">UnusedPrivateField</a>"));
 
         // there should be the section Violations By Priority
-        assertTrue(str.contains("Violations By Priority</h3>"));
-        assertTrue(str.contains("Priority 3</h4>"));
-        assertTrue(str.contains("Priority 4</h4>"));
+        assertTrue(str.contains("Violations By Priority</h2>"));
+        assertTrue(str.contains("Priority 3</h3>"));
+        assertTrue(str.contains("Priority 4</h3>"));
         // the file App.java is mentioned 3 times: in prio 3, in prio 4 and in the files section
         assertEquals(3, StringUtils.countMatches(str, "def/configuration/App.java"));
 
@@ -105,8 +103,8 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
                 new File(getBasedir(), "src/test/resources/unit/default-configuration/jxr-files"),
                 new File(getBasedir(), "target/test/unit/default-configuration/target/site"));
 
-        File generatedReport =
-                generateReport("pmd", "default-configuration/pmd-report-not-render-rule-priority-plugin-config.xml");
+        File generatedReport = generateReport(
+                getGoal(), "default-configuration/pmd-report-not-render-rule-priority-plugin-config.xml");
         assertTrue(FileUtils.fileExists(generatedReport.getAbsolutePath()));
 
         String str = readFile(generatedReport);
@@ -121,7 +119,7 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
                 new File(getBasedir(), "target/test/unit/default-configuration/target/site"));
 
         File generatedReport =
-                generateReport("pmd", "default-configuration/pmd-report-no-render-violations-by-priority.xml");
+                generateReport(getGoal(), "default-configuration/pmd-report-no-render-violations-by-priority.xml");
         assertTrue(FileUtils.fileExists(generatedReport.getAbsolutePath()));
 
         String str = readFile(generatedReport);
@@ -139,7 +137,7 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
                 new File(getBasedir(), "src/test/resources/unit/default-configuration/jxr-files"),
                 new File(getBasedir(), "target/test/unit/pmd-with-analysis-cache-plugin-config/target/site"));
 
-        generateReport("pmd", "default-configuration/pmd-with-analysis-cache-plugin-config.xml");
+        generateReport(getGoal(), "default-configuration/pmd-with-analysis-cache-plugin-config.xml");
 
         // check if the PMD analysis cache file has been generated
         File cacheFile =
@@ -149,7 +147,7 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
 
     public void testJavascriptConfiguration() throws Exception {
         File generatedReport =
-                generateReport("pmd", "default-configuration/javascript-configuration-plugin-config.xml");
+                generateReport(getGoal(), "default-configuration/javascript-configuration-plugin-config.xml");
         assertTrue(FileUtils.fileExists(generatedReport.getAbsolutePath()));
 
         // check if the PMD files were generated
@@ -180,7 +178,7 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
 
         File testPom = new File(
                 getBasedir(), "src/test/resources/unit/default-configuration/default-configuration-plugin-config.xml");
-        PmdReport mojo = (PmdReport) createReportMojo("pmd", testPom);
+        PmdReport mojo = (PmdReport) createReportMojo(getGoal(), testPom);
 
         // Additional test case for MPMD-174 (https://issues.apache.org/jira/browse/MPMD-174).
         int port = determineFreePort();
@@ -270,7 +268,7 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
      * @throws Exception
      */
     public void testCustomConfiguration() throws Exception {
-        File generatedReport = generateReport("pmd", "custom-configuration/custom-configuration-plugin-config.xml");
+        File generatedReport = generateReport(getGoal(), "custom-configuration/custom-configuration-plugin-config.xml");
         assertTrue(FileUtils.fileExists(generatedReport.getAbsolutePath()));
 
         // check the generated files
@@ -307,7 +305,7 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
      * @throws Exception
      */
     public void testSkipConfiguration() throws Exception {
-        File generatedReport = generateReport("pmd", "custom-configuration/skip-plugin-config.xml");
+        File generatedReport = generateReport(getGoal(), "custom-configuration/skip-plugin-config.xml");
         assertFalse(FileUtils.fileExists(generatedReport.getAbsolutePath()));
 
         // verify the generated files do not exist because PMD was skipped
@@ -319,17 +317,17 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
 
         // the fact, the PMD execution has been skipped, should be logged
         String output = CapturingPrintStream.getOutput();
-        assertTrue(output.contains("Skipping PMD execution"));
+        assertTrue(output.contains("Skipping org.apache.maven.plugins:maven-pmd-plugin"));
     }
 
     public void testSkipEmptyReportConfiguration() throws Exception {
         // verify the generated files do not exist because PMD was skipped
-        File generatedReport = generateReport("pmd", "empty-report/skip-empty-report-plugin-config.xml");
+        File generatedReport = generateReport(getGoal(), "empty-report/skip-empty-report-plugin-config.xml");
         assertFalse(FileUtils.fileExists(generatedReport.getAbsolutePath()));
     }
 
     public void testEmptyReportConfiguration() throws Exception {
-        File generatedReport = generateReport("pmd", "empty-report/empty-report-plugin-config.xml");
+        File generatedReport = generateReport(getGoal(), "empty-report/empty-report-plugin-config.xml");
         assertTrue(FileUtils.fileExists(generatedReport.getAbsolutePath()));
 
         // verify the generated files do exist, even if there are no violations
@@ -345,7 +343,7 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
         try {
             File testPom =
                     new File(getBasedir(), "src/test/resources/unit/invalid-format/invalid-format-plugin-config.xml");
-            AbstractPmdReport mojo = createReportMojo("pmd", testPom);
+            AbstractPmdReport mojo = createReportMojo(getGoal(), testPom);
             setVariableValueToObject(
                     mojo, "compileSourceRoots", mojo.getProject().getCompileSourceRoots());
             generateReport(mojo, testPom);
@@ -358,7 +356,7 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
 
     public void testInvalidTargetJdk() throws Exception {
         try {
-            generateReport("pmd", "empty-report/invalid-format/invalid-target-jdk-plugin-config.xml");
+            generateReport(getGoal(), "empty-report/invalid-format/invalid-target-jdk-plugin-config.xml");
 
             fail("Must throw MavenReportException.");
         } catch (Exception e) {
@@ -372,7 +370,7 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
      */
     public void testIncludeXmlInSite() throws Exception {
         File generatedReport =
-                generateReport("pmd", "default-configuration/pmd-report-include-xml-in-site-plugin-config.xml");
+                generateReport(getGoal(), "default-configuration/pmd-report-include-xml-in-site-plugin-config.xml");
         assertTrue(FileUtils.fileExists(generatedReport.getAbsolutePath()));
 
         // verify the pmd file is included in site
@@ -396,7 +394,7 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
 
         File testPom = new File(
                 getBasedir(), "src/test/resources/unit/default-configuration/default-configuration-plugin-config.xml");
-        PmdReport mojo = (PmdReport) lookupMojo("pmd", testPom);
+        PmdReport mojo = (PmdReport) lookupMojo(getGoal(), testPom);
 
         assertEquals(
                 "locationTemp is not correctly encoding filename",
@@ -412,7 +410,8 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
      * @throws Exception
      */
     public void testSuppressMarkerConfiguration() throws Exception {
-        File generatedReport = generateReport("pmd", "default-configuration/pmd-with-suppressMarker-plugin-config.xml");
+        File generatedReport =
+                generateReport(getGoal(), "default-configuration/pmd-with-suppressMarker-plugin-config.xml");
         assertTrue(FileUtils.fileExists(generatedReport.getAbsolutePath()));
 
         // check if the PMD files were generated
@@ -436,7 +435,7 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
 
     public void testSuppressMarkerConfigurationWithoutRendering() throws Exception {
         File generatedReport =
-                generateReport("pmd", "default-configuration/pmd-with-suppressMarker-no-render-plugin-config.xml");
+                generateReport(getGoal(), "default-configuration/pmd-with-suppressMarker-no-render-plugin-config.xml");
         assertTrue(FileUtils.fileExists(generatedReport.getAbsolutePath()));
 
         // check if the PMD files were generated
@@ -459,7 +458,7 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
     }
 
     public void testJspConfiguration() throws Exception {
-        File generatedReport = generateReport("pmd", "default-configuration/jsp-configuration-plugin-config.xml");
+        File generatedReport = generateReport(getGoal(), "default-configuration/jsp-configuration-plugin-config.xml");
         assertTrue(FileUtils.fileExists(generatedReport.getAbsolutePath()));
 
         // check if the PMD files were generated
@@ -495,7 +494,7 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
 
     public void testPMDProcessingError() throws Exception {
         try {
-            generateReport("pmd", "processing-error/pmd-processing-error-plugin-config.xml");
+            generateReport(getGoal(), "processing-error/pmd-processing-error-plugin-config.xml");
             fail("Expected exception");
         } catch (RuntimeException e) {
             assertTrue(e.getMessage().endsWith("Found 1 PMD processing errors"));
@@ -503,7 +502,8 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
     }
 
     public void testPMDProcessingErrorWithDetailsSkipped() throws Exception {
-        File generatedReport = generateReport("pmd", "processing-error/pmd-processing-error-skip-plugin-config.xml");
+        File generatedReport =
+                generateReport(getGoal(), "processing-error/pmd-processing-error-skip-plugin-config.xml");
         assertTrue(FileUtils.fileExists(generatedReport.getAbsolutePath()));
 
         String output = CapturingPrintStream.getOutput();
@@ -523,7 +523,7 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
 
     public void testPMDProcessingErrorWithDetailsNoReport() throws Exception {
         File generatedReport =
-                generateReport("pmd", "processing-error/pmd-processing-error-no-report-plugin-config.xml");
+                generateReport(getGoal(), "processing-error/pmd-processing-error-no-report-plugin-config.xml");
         assertTrue(FileUtils.fileExists(generatedReport.getAbsolutePath()));
 
         String output = CapturingPrintStream.getOutput();
@@ -542,7 +542,7 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
     }
 
     public void testPMDExcludeRootsShouldExcludeSubdirectories() throws Exception {
-        generateReport("pmd", "exclude-roots/pmd-exclude-roots-plugin-config.xml");
+        generateReport(getGoal(), "exclude-roots/pmd-exclude-roots-plugin-config.xml");
 
         File generatedFile = new File(getBasedir(), "target/test/unit/exclude-roots/target/pmd.xml");
         assertTrue(FileUtils.fileExists(generatedFile.getAbsolutePath()));
@@ -557,7 +557,7 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
     }
 
     public void testViolationExclusion() throws Exception {
-        generateReport("pmd", "default-configuration/pmd-report-pmd-exclusions-configuration-plugin-config.xml");
+        generateReport(getGoal(), "default-configuration/pmd-report-pmd-exclusions-configuration-plugin-config.xml");
 
         File generatedFile = new File(getBasedir(), "target/test/unit/default-configuration/target/pmd.xml");
         assertTrue(FileUtils.fileExists(generatedFile.getAbsolutePath()));
@@ -582,13 +582,13 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
                 new File(getBasedir(), "src/test/resources/unit/default-configuration/jxr-files"),
                 new File(getBasedir(), "target/test/unit/default-configuration/target/site"));
 
-        File generatedReport = generateReport("pmd", "default-configuration/pmd-report-custom-rules.xml");
+        File generatedReport = generateReport(getGoal(), "default-configuration/pmd-report-custom-rules.xml");
         assertTrue(FileUtils.fileExists(generatedReport.getAbsolutePath()));
 
         String str = readFile(generatedReport);
 
         // custom rule without link
-        assertEquals(2, StringUtils.countMatches(str, "<td align=\"left\">CustomRule</td>"));
+        assertEquals(2, StringUtils.countMatches(str, "<td>CustomRule</td>"));
         // standard rule with link
         assertEquals(4, StringUtils.countMatches(str, "\">UnusedPrivateField</a></td>"));
     }
@@ -635,7 +635,7 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
 
         File testPom =
                 new File(getBasedir(), "src/test/resources/unit/default-configuration/pmd-report-resolve-rulesets.xml");
-        PmdReport mojo = (PmdReport) createReportMojo("pmd", testPom);
+        PmdReport mojo = (PmdReport) createReportMojo(getGoal(), testPom);
         mojo.rulesets[3] = sonarExportRulesetUrl;
         mojo.rulesets[4] = myRulesetUrl;
         mojo.rulesets[5] = notAInternalRulesetUrl;
@@ -669,5 +669,10 @@ public class PmdReportTest extends AbstractPmdReportTestCase {
         assertTrue(FileUtils.fileExists(generatedFile.getAbsolutePath()));
 
         mockServer.stop();
+    }
+
+    @Override
+    protected String getGoal() {
+        return "pmd";
     }
 }

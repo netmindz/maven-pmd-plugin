@@ -315,7 +315,6 @@ public class PmdReport extends AbstractPmdReport {
     @Override
     public boolean canGenerateReport() {
         if (skip) {
-            getLog().info("Skipping PMD execution");
             return false;
         }
 
@@ -325,10 +324,6 @@ public class PmdReport extends AbstractPmdReport {
                 executePmd();
                 if (skipEmptyReport) {
                     result = pmdResult.hasViolations();
-                    if (!result) {
-                        getLog().debug("Skipping report since skipEmptyReport is true and "
-                                + "there are no PMD violations.");
-                    }
                 }
             } catch (MavenReportException e) {
                 throw new RuntimeException(e);

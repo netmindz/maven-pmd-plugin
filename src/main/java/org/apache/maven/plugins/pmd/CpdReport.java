@@ -149,7 +149,6 @@ public class CpdReport extends AbstractPmdReport {
     @Override
     public boolean canGenerateReport() {
         if (skip) {
-            getLog().info("Skipping CPD execution");
             return false;
         }
 
@@ -159,9 +158,6 @@ public class CpdReport extends AbstractPmdReport {
                 executeCpd();
                 if (skipEmptyReport) {
                     result = cpdResult.hasDuplications();
-                    if (!result) {
-                        getLog().debug("Skipping report since skipEmptyReport is true and there are no CPD issues.");
-                    }
                 }
             } catch (MavenReportException e) {
                 throw new RuntimeException(e);

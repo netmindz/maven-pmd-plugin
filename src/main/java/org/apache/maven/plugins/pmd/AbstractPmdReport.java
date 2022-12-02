@@ -39,6 +39,7 @@ import net.sourceforge.pmd.PMDVersion;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.ReportPlugin;
 import org.apache.maven.model.Reporting;
+import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
@@ -242,12 +243,6 @@ public abstract class AbstractPmdReport extends AbstractMavenReport {
     // ----------------------------------------------------------------------
 
     /**
-     * The projects in the reactor for aggregation report.
-     */
-    @Parameter(property = "reactorProjects", readonly = true)
-    protected List<MavenProject> reactorProjects;
-
-    /**
      * The current build session instance. This is used for
      * toolchain manager API calls and for dependency resolver API calls.
      */
@@ -263,6 +258,14 @@ public abstract class AbstractPmdReport extends AbstractMavenReport {
     @Override
     protected MavenProject getProject() {
         return project;
+    }
+
+    protected List<MavenProject> getReactorProjects() {
+        return reactorProjects;
+    }
+
+    protected MojoExecution getMojoExecution() {
+        return mojoExecution;
     }
 
     protected String constructXRefLocation(boolean test) {
